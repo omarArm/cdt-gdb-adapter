@@ -11,6 +11,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as mi from '../mi';
 import {
+    BreakpointEvent,
     Handles,
     InitializedEvent,
     Logger,
@@ -430,8 +431,9 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     return false;
                 }
                 if (
-                    !gdbbp['original-location'].startsWith(
-                        gdbOriginalLocationPrefix
+                    !(gdbbp['original-location'].includes(
+                        gdbOriginalLocationPrefix) || (gdbbp['original-location'].includes(
+                            file))
                     )
                 ) {
                     return false;
@@ -461,9 +463,26 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                         gdbbp.type === 'hw breakpoint';
 
                     // Check with original-location so that relocated breakpoints are properly matched
-                    const gdbOriginalLocation = `${gdbOriginalLocationPrefix}${vsbp.line}`;
+                    let isBreakpointInRightLocation : boolean = false;
+                    const isSameFileName = gdbbp['original-location']?.includes(file);
+                    // Create a regex for gdb-mi original-location format
+                    const regexMi = new RegExp('^-source.+-line\\s+([0-9]+)$');
+                    let regexmatch = gdbbp['original-location']?.match(regexMi);
+                    if(!regexmatch) {
+                        // if no match with the gdb-mi format, check normal gdb format
+                        const regexWithoutMi = new RegExp('^.*:([0-9]+)$');
+                        regexmatch = gdbbp['original-location']?.match(regexWithoutMi);
+                        if(regexmatch) {
+                            // if there is still no match, leave isBreakpointInRightLocation as false
+                            isSameFileName && (+regexmatch[1] == vsbp.line) ? isBreakpointInRightLocation = true : false;
+                        }
+                    } else {
+                        isSameFileName && (+regexmatch[1] == vsbp.line) ? isBreakpointInRightLocation = true : false;
+                    }
+                    //const gdbOriginalLocation = `${gdbOriginalLocationPrefix}${vsbp.line}`;
+                    //gdbbp['original-location'] === gdbOriginalLocation
                     return !!(
-                        gdbbp['original-location'] === gdbOriginalLocation &&
+                        isBreakpointInRightLocation &&
                         vsbpCond === gdbbpCond &&
                         vsbpIsBreakpointTypeHardware ===
                             gdbbpIsBreakpointTypeHardware
@@ -1713,12 +1732,59 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                 break;
             }
             case 'thread-selected':
+                break;
             case 'thread-group-added':
+                break;
             case 'thread-group-started':
+                break;
             case 'thread-group-exited':
+                break;
             case 'library-loaded':
+                break;
+            case 'breakpoint-created':
+                {
+                    if(notifyData.bkpt.disp === 'del'){
+                        break;
+                    } 
+                    const breakpoint : DebugProtocol.Breakpoint = {
+                        id: parseInt(notifyData.bkpt.number, 10),
+                        verified: notifyData.bkpt.enabled === 'y',
+                        //verified: false,
+                        source: {
+                            name: notifyData.bkpt.fullname,
+                            path: notifyData.bkpt.file,
+                        },
+                        line: notifyData.bkpt.line,
+                    };
+                    const breakpointevent =  new BreakpointEvent('new', breakpoint);
+                    this.sendEvent(breakpointevent);
+                }
+                break;
             case 'breakpoint-modified':
+                {
+                    const breakpoint : DebugProtocol.Breakpoint = {
+                        id: parseInt(notifyData.bkpt.number, 10),
+                        verified: notifyData.bkpt.enabled === 'y',
+                        source: {
+                            name: notifyData.bkpt.fullname,
+                            path: notifyData.bkpt.file,
+                        },
+                        line: notifyData.bkpt.line,
+                    };
+                    const breakpointevent =  new BreakpointEvent('changed', breakpoint);
+                    this.sendEvent(breakpointevent);
+                }
+                break;
             case 'breakpoint-deleted':
+                {
+                    const breakpoint : DebugProtocol.Breakpoint = {
+                        id: parseInt(notifyData.id, 10),
+                        verified: false
+                    };
+                    const breakpointevent =  new BreakpointEvent('removed', breakpoint);
+                    this.sendEvent(breakpointevent);
+                }
+                break;
             case 'cmd-param-changed':
                 // Known unhandled notifies
                 break;
