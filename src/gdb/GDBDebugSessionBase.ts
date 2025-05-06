@@ -12,6 +12,7 @@ import * as path from 'path';
 import * as mi from '../mi';
 import {
     BreakpointEvent,
+    Event,
     Handles,
     InitializedEvent,
     Logger,
@@ -1754,6 +1755,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     };
                     const breakpointevent =  new BreakpointEvent('new', breakpoint);
                     this.sendEvent(breakpointevent);
+                    this.sendEvent(new Event("UpdateBreakpointView", {}));
                 }
                 break;
             case 'breakpoint-modified':
@@ -1769,6 +1771,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     };
                     const breakpointevent =  new BreakpointEvent('changed', breakpoint);
                     this.sendEvent(breakpointevent);
+                    this.sendEvent(new Event("UpdateBreakpointView", {}));
                 }
                 break;
             case 'breakpoint-deleted':
@@ -1779,6 +1782,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     };
                     const breakpointevent =  new BreakpointEvent('removed', breakpoint);
                     this.sendEvent(breakpointevent);
+                    this.sendEvent(new Event("UpdateBreakpointView", {}));
                 }
                 break;
             case 'cmd-param-changed':
