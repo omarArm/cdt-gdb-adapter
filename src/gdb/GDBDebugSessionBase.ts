@@ -463,24 +463,20 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                         gdbbp.type === 'hw breakpoint';
 
                     // Check with original-location so that relocated breakpoints are properly matched
-                    let isBreakpointInRightLocation : boolean = false;
-                    const isSameFileName = gdbbp['original-location']?.includes(file);
-                    // Create a regex for gdb-mi original-location format
+                    // Create a boolean variable to check if the breakpoint is in the right location
+                    let isBreakpointInRightLocation = false;
+                    // Check if the gdb breakpoint is in the same file being checked now
+                    const isSameFileName = gdbbp['original-location']?.includes(file)? true : false;
+                    // Create a regex for gdb-mi original-location format (--source <file-name> --line <line-number>)
                     const regexMi = new RegExp('^-source.+-line\\s+([0-9]+)$');
-                    let regexmatch = gdbbp['original-location']?.match(regexMi);
-                    if(!regexmatch) {
-                        // if no match with the gdb-mi format, check normal gdb format
-                        const regexWithoutMi = new RegExp('^.*:([0-9]+)$');
-                        regexmatch = gdbbp['original-location']?.match(regexWithoutMi);
-                        if(regexmatch) {
-                            // if there is still no match, leave isBreakpointInRightLocation as false
-                            isSameFileName && (+regexmatch[1] == vsbp.line) ? isBreakpointInRightLocation = true : false;
-                        }
-                    } else {
-                        isSameFileName && (+regexmatch[1] == vsbp.line) ? isBreakpointInRightLocation = true : false;
+                    // Create a regex for gdb-mi original-location format (<file-name>:<line-number>)
+                    const regexWithoutMi = new RegExp('^.*:([0-9]+)$');
+                    // Check if gdbbp original-location matches regexMI
+                    const regexMatch = gdbbp['original-location']?.match(regexMi)??gdbbp['original-location']?.match(regexWithoutMi);
+                    if(regexMatch && isSameFileName) {
+                        isBreakpointInRightLocation = (isSameFileName && (regexMatch[1] === String(vsbp.line)));
                     }
-                    //const gdbOriginalLocation = `${gdbOriginalLocationPrefix}${vsbp.line}`;
-                    //gdbbp['original-location'] === gdbOriginalLocation
+                                        
                     return !!(
                         isBreakpointInRightLocation &&
                         vsbpCond === gdbbpCond &&
