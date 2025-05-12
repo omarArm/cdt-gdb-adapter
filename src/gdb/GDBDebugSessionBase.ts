@@ -467,7 +467,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     // Create a boolean variable to check if the breakpoint is in the right location
                     let isBreakpointInRightLocation = false;
                     // Check if the gdb breakpoint is in the same file being checked now
-                    const isSameFileName = gdbbp['original-location']?.includes(file)? true : false;
+                    const isSameFileName = gdbbp['original-location']?.includes(file) ? true : false;
                     // Create a regex for gdb-mi original-location format (--source <file-name> --line <line-number>)
                     const regexMi = new RegExp('^-source.+-line\\s+([0-9]+)$');
                     // Create a regex for gdb-mi original-location format (<file-name>:<line-number>)
