@@ -474,7 +474,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     const regexWithoutMi = new RegExp('^.*:([0-9]+)$');
                     // Check if gdbbp original-location matches regexMI
                     const regexMatch = gdbbp['original-location']?.match(regexMi)??gdbbp['original-location']?.match(regexWithoutMi);
-                    if(regexMatch && isSameFileName) {
+                    if (regexMatch && isSameFileName) {
                         isBreakpointInRightLocation = (isSameFileName && (regexMatch[1] === String(vsbp.line)));
                     }
                                         
