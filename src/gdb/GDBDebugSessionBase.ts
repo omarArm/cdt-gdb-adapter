@@ -468,7 +468,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     let isBreakpointInRightLocation = false;
                     // Check if the gdb breakpoint is in the same file being checked now
                     const isSameFileName = gdbbp['original-location']?.includes(file) ? true : false;
-                    // Create a regex for gdb-mi original-location format (--source <file-name> --line <line-number>)
+                    // Create a regex for gdb-mi original-location format (-source <file-name> -line <line-number>)
                     const regexMi = new RegExp('^-source.+-line\\s+([0-9]+)$');
                     // Create a regex for gdb-mi original-location format (<file-name>:<line-number>)
                     const regexWithoutMi = new RegExp('^.*:([0-9]+)$');
@@ -1729,13 +1729,9 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                 break;
             }
             case 'thread-selected':
-                break;
             case 'thread-group-added':
-                break;
             case 'thread-group-started':
-                break;
             case 'thread-group-exited':
-                break;
             case 'library-loaded':
                 break;
             case 'breakpoint-created':
@@ -1746,7 +1742,6 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     const breakpoint : DebugProtocol.Breakpoint = {
                         id: parseInt(notifyData.bkpt.number, 10),
                         verified: notifyData.bkpt.enabled === 'y',
-                        //verified: false,
                         source: {
                             name: notifyData.bkpt.fullname,
                             path: notifyData.bkpt.file,
@@ -1755,7 +1750,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     };
                     const breakpointevent =  new BreakpointEvent('new', breakpoint);
                     this.sendEvent(breakpointevent);
-                    this.sendEvent(new Event("UpdateBreakpointView", {}));
+                    this.sendEvent(new Event("cdt-gdb-adapter/UpdateBreakpointView", {}));
                 }
                 break;
             case 'breakpoint-modified':
@@ -1771,7 +1766,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     };
                     const breakpointevent =  new BreakpointEvent('changed', breakpoint);
                     this.sendEvent(breakpointevent);
-                    this.sendEvent(new Event("UpdateBreakpointView", {}));
+                    this.sendEvent(new Event("cdt-gdb-adapter/UpdateBreakpointView", {}));
                 }
                 break;
             case 'breakpoint-deleted':
@@ -1782,7 +1777,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                     };
                     const breakpointevent =  new BreakpointEvent('removed', breakpoint);
                     this.sendEvent(breakpointevent);
-                    this.sendEvent(new Event("UpdateBreakpointView", {}));
+                    this.sendEvent(new Event("cdt-gdb-adapter/UpdateBreakpointView", {}));
                 }
                 break;
             case 'cmd-param-changed':
