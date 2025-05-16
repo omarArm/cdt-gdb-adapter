@@ -1,10 +1,10 @@
 {
-    "name": "node",
-    "build": { "dockerfile": "Dockerfile" },
-  
-    "customizations": {
-      "vscode": {
-        "extensions": []
-      }
+  "name": "node",
+  "build": { "dockerfile": "Dockerfile" },
+
+  "customizations": {
+    "vscode": {
+      "extensions": []
     }
+  }
 }

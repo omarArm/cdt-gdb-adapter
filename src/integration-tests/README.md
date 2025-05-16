@@ -32,7 +32,9 @@ The tests can be run on a docker container. This is useful to run the testsuite
 in the same environment as it is run on the CI machine.
 
 To do this, first build the Dockerfile provided in the repo and then run the tests inside of it using the following commands.
+
 ### Build Dockerfile to generate docker image
+
 `docker build -t <prefered_docker_image_name> .`
 
 ### Run docker container, build cdt-gdb-adapter project, and run the tests
@@ -44,6 +46,7 @@ make clean -C src/integration-tests/test-programs
 make -C src/integration-tests/test-programs
 yarn test &> log.log
 ```
+
 The user should find the file log.log with the tests logs in his top level directory
 
 ## "Error: No source file name /work/..."
