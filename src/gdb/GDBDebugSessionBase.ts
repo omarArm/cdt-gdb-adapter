@@ -420,7 +420,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
         response.body.supportsHitConditionalBreakpoints = true;
         response.body.supportsLogPoints = true;
         response.body.supportsFunctionBreakpoints = true;
-        // response.body.supportsSetExpression = true;
+        response.body.supportsSetExpression = true;
         response.body.supportsDisassembleRequest = true;
         response.body.supportsReadMemoryRequest = true;
         response.body.supportsWriteMemoryRequest = true;
@@ -1724,7 +1724,8 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                 highFrame,
                 threadId,
             });
-
+            //const globalFrameHandle = this.frameHandles.create({threadId, frameId: 0}); // FrameId 0 is reserved for the global frame
+            //const globalFrame = new StackFrame(globalFrameHandle, 'Global Scope') as DebugProtocol.StackFrame;
             const stack = listResult.stack.map((frame) => {
                 let source;
                 if (frame.fullname) {
@@ -2108,14 +2109,14 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
             if (varobj) {
                 assign = await mi.sendVarAssign(this.gdb, {
                     varname: varobj.varname,
-                    expression: args.value,
+                    value: args.value,
                     frameRef: frameRef,
                 });
             } else {
                 try {
                     assign = await mi.sendVarAssign(this.gdb, {
                         varname,
-                        expression: args.value,
+                        value: args.value,
                         frameRef: frameRef,
                     });
                 } catch (err) {
@@ -2140,7 +2141,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                             try {
                                 assign = await mi.sendVarAssign(this.gdb, {
                                     varname: grandchildVarname,
-                                    expression: args.value,
+                                    value: args.value,
                                     frameRef: frameRef,
                                 });
                                 break;
@@ -2176,11 +2177,42 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
         this.sendResponse(response);
     }
 
-    // protected async setExpressionRequest(response: DebugProtocol.SetExpressionResponse,
-    //                                      args: DebugProtocol.SetExpressionArguments): Promise<void> {
-    //     logger.error('got setExpressionRequest');
-    //     this.sendResponse(response);
-    // }
+    // In implementing this request. We first try and check if the variable exists as is
+    protected async setExpressionRequest(response: DebugProtocol.SetExpressionResponse,
+                                         args: DebugProtocol.SetExpressionArguments): Promise<void> {
+        if (!this.canRequestProceed()) {
+            this.logger.verbose(
+                'Debug adapter cannot process set variable request, skipping it.'
+            );
+            console.log(args);
+            this.sendResponse(response);
+            return;
+        }
+        try {
+            const initialFrameRef = args.frameId
+                ? this.frameHandles.get(args.frameId)
+                : undefined;
+            const [gdb, frameRef, depth] =
+                await this.getFrameContext(initialFrameRef);
+            const varObj = this.gdb.varManager.getVar(frameRef, depth, args.expression);
+            if (!varObj) {
+                throw new Error(`Variable ${args.expression} not found`);
+            } else {
+                const assign = await mi.sendVarAssign(gdb, {varname: varObj.varname, value: args.value, frameRef});
+                response.body = {
+                    value: assign.value,
+                };
+            }
+            this.sendResponse(response);
+        } catch (err) {
+            this.sendErrorResponse(
+                response,
+                1,
+                err instanceof Error ? err.message : String(err)
+            );
+        }
+        
+    }
 
     /**
      * Send command to backend.

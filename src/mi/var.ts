@@ -174,7 +174,7 @@ export function sendVarAssign(
     gdb: IGDBBackend,
     params: {
         varname: string;
-        expression: string;
+        value: string;
         frameRef?: FrameReference;
     }
 ): Promise<MIVarAssignResponse> {
@@ -185,7 +185,7 @@ export function sendVarAssign(
     if (params.frameRef?.frameId !== undefined) {
         command += ` --frame ${params.frameRef.frameId}`;
     }
-    command += ` ${params.varname} ${params.expression}`;
+    command += ` ${params.varname} ${params.value}`;
     return gdb.sendCommand(command);
 }
 
