@@ -2178,8 +2178,10 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
     }
 
     // In implementing this request. We first try and check if the variable exists as is
-    protected async setExpressionRequest(response: DebugProtocol.SetExpressionResponse,
-                                         args: DebugProtocol.SetExpressionArguments): Promise<void> {
+    protected async setExpressionRequest(
+        response: DebugProtocol.SetExpressionResponse,
+        args: DebugProtocol.SetExpressionArguments
+    ): Promise<void> {
         if (!this.canRequestProceed()) {
             this.logger.verbose(
                 'Debug adapter cannot process set variable request, skipping it.'
@@ -2194,11 +2196,19 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                 : undefined;
             const [gdb, frameRef, depth] =
                 await this.getFrameContext(initialFrameRef);
-            const varObj = this.gdb.varManager.getVar(frameRef, depth, args.expression);
+            const varObj = this.gdb.varManager.getVar(
+                frameRef,
+                depth,
+                args.expression
+            );
             if (!varObj) {
                 throw new Error(`Variable ${args.expression} not found`);
             } else {
-                const assign = await mi.sendVarAssign(gdb, {varname: varObj.varname, value: args.value, frameRef});
+                const assign = await mi.sendVarAssign(gdb, {
+                    varname: varObj.varname,
+                    value: args.value,
+                    frameRef,
+                });
                 response.body = {
                     value: assign.value,
                 };
@@ -2211,7 +2221,6 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                 err instanceof Error ? err.message : String(err)
             );
         }
-        
     }
 
     /**
