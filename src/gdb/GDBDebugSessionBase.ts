@@ -2175,9 +2175,9 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
             );
         }
         this.sendResponse(response);
+        this.sendEvent(new InvalidatedEvent(['variables']));
     }
 
-    // In implementing this request. We first try and check if the variable exists as is
     protected async setExpressionRequest(
         response: DebugProtocol.SetExpressionResponse,
         args: DebugProtocol.SetExpressionArguments
@@ -2214,6 +2214,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                 };
             }
             this.sendResponse(response);
+            this.sendEvent(new InvalidatedEvent(['variables']));
         } catch (err) {
             this.sendErrorResponse(
                 response,
