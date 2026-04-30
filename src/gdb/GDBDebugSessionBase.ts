@@ -1724,8 +1724,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                 highFrame,
                 threadId,
             });
-            //const globalFrameHandle = this.frameHandles.create({threadId, frameId: 0}); // FrameId 0 is reserved for the global frame
-            //const globalFrame = new StackFrame(globalFrameHandle, 'Global Scope') as DebugProtocol.StackFrame;
+
             const stack = listResult.stack.map((frame) => {
                 let source;
                 if (frame.fullname) {
@@ -2109,14 +2108,14 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
             if (varobj) {
                 assign = await mi.sendVarAssign(this.gdb, {
                     varname: varobj.varname,
-                    value: args.value,
+                    expression: args.value,
                     frameRef: frameRef,
                 });
             } else {
                 try {
                     assign = await mi.sendVarAssign(this.gdb, {
                         varname,
-                        value: args.value,
+                        expression: args.value,
                         frameRef: frameRef,
                     });
                 } catch (err) {
@@ -2141,7 +2140,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
                             try {
                                 assign = await mi.sendVarAssign(this.gdb, {
                                     varname: grandchildVarname,
-                                    value: args.value,
+                                    expression: args.value,
                                     frameRef: frameRef,
                                 });
                                 break;
@@ -2206,7 +2205,7 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
             } else {
                 const assign = await mi.sendVarAssign(gdb, {
                     varname: varObj.varname,
-                    value: args.value,
+                    expression: args.value,
                     frameRef,
                 });
                 response.body = {
