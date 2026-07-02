@@ -861,6 +861,43 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
         return pausePromise;
     }
 
+    private async autoCompleteCommands(
+        text: string
+    ): Promise<DebugProtocol.CompletionItem[]> {
+        const commandToComplete = text.slice(1).trim();
+        const completions = await mi.sendCompletions(
+            this.gdb,
+            commandToComplete
+        );
+        const targets: DebugProtocol.CompletionItem[] = completions.matches.map(
+            (completion) => {
+                return {
+                    label: completion,
+                };
+            }
+        );
+        return targets;
+    }
+
+    private async autoCompleteExpressions(
+        text: string
+    ): Promise<DebugProtocol.CompletionItem[]> {
+        const completionsList = await mi.sendSymbolInfoVars(this.gdb, {
+            name: `${text}`,
+        });
+        let targets: DebugProtocol.CompletionItem[] = [];
+        if (completionsList.symbols.debug) {
+            for (const debugFile of completionsList.symbols.debug) {
+                targets = targets.concat(debugFile.symbols.map((completion) => {
+                    return {
+                        label: completion.name,
+                    };
+                }));
+            }
+        }
+        return targets;
+    }
+
     protected async completionsRequest(
         response: DebugProtocol.CompletionsResponse,
         args: DebugProtocol.CompletionsArguments
@@ -875,22 +912,17 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
             }
             const text = args.text.trim();
             if (!text.startsWith('>')) {
-                // All GDB commands must start with a '>' character. If expression doesn't, return no completions.
-                this.sendResponse(response);
-                return;
+                const completions = await this.autoCompleteExpressions(text);
+                response.body = {
+                    targets: completions,
+                };
+            } else {
+                const completions = await this.autoCompleteCommands(text);
+                response.body = {
+                    targets: completions,
+                };
             }
-            const commandToComplete = text.slice(1).trim();
-            const completions = await mi.sendCompletions(
-                this.gdb,
-                commandToComplete
-            );
-            response.body = {
-                targets: completions.matches.map((completion) => {
-                    return {
-                        label: completion,
-                    };
-                }),
-            };
+
             this.sendResponse(response);
         } catch (err) {
             if (err instanceof Error && err.message.includes('complete')) {

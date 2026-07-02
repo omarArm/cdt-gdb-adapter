@@ -16,8 +16,8 @@ import { expect } from 'chai';
 describe('Miscellaneous GDB Commands Tests', function () {
     let dc: CdtDebugClient;
 
-    const evaluateProgram = path.join(testProgramsDir, 'evaluate');
-    const evaluateSrc = path.join(testProgramsDir, 'evaluate.cpp');
+    const evaluateProgram = path.join(testProgramsDir, 'vars_globals');
+    const evaluateSrc = path.join(testProgramsDir, 'vars_globals.c');
 
     beforeEach(async function () {
         dc = await standardBeforeEach();
@@ -27,7 +27,7 @@ describe('Miscellaneous GDB Commands Tests', function () {
             }),
             {
                 path: evaluateSrc,
-                line: 2,
+                line: 45,
             }
         );
     });
@@ -58,5 +58,13 @@ describe('Miscellaneous GDB Commands Tests', function () {
         });
         expect(completions.body.targets).to.be.an('array');
         expect(completions.body.targets).to.deep.include({ label: 'b main' });
+    });
+
+    it.only('should retrieve completions for simple expressions without command prefix', async function () {
+        const completions: any = await dc.send('completions', {
+            text: 'glob',
+        });
+        expect(completions.body.targets).to.be.an('array');
+        expect(completions.body.targets).to.deep.include({ label: 'global_int' });
     });
 });
