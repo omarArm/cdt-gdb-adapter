@@ -60,7 +60,7 @@ describe('Miscellaneous GDB Commands Tests', function () {
         expect(completions.body.targets).to.deep.include({ label: 'b main' });
     });
 
-    it.only('should retrieve completions for simple expressions without command prefix', async function () {
+    it('should retrieve completions for simple expressions without command prefix', async function () {
         const completions: any = await dc.send('completions', {
             text: 'glob',
         });

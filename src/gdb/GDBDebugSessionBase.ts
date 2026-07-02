@@ -885,14 +885,19 @@ export abstract class GDBDebugSessionBase extends LoggingDebugSession {
         const completionsList = await mi.sendSymbolInfoVars(this.gdb, {
             name: `${text}`,
         });
-        let targets: DebugProtocol.CompletionItem[] = [];
+        const targets: DebugProtocol.CompletionItem[] = [];
+        const targetsLabel = new Set<string>();
         if (completionsList.symbols.debug) {
             for (const debugFile of completionsList.symbols.debug) {
-                targets = targets.concat(debugFile.symbols.map((completion) => {
-                    return {
+                for (const completion of debugFile.symbols) {
+                    if (targetsLabel.has(completion.name)) {
+                        continue;
+                    }
+                    targetsLabel.add(completion.name);
+                    targets.push({
                         label: completion.name,
-                    };
-                }));
+                    });
+                }
             }
         }
         return targets;
